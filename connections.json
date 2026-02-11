@@ -1,0 +1,10 @@
+[
+  {
+    "name": "cockroach",
+    "host": "localhost",
+    "port": 26257,
+    "database": "defaultdb",
+    "user": "root",
+    "sslmode": "disable"
+  }
+]

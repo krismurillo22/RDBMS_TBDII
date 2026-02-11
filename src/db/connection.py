@@ -1,6 +1,5 @@
 import psycopg2
 
-# Datos de conexión directos
 DB_HOST = "localhost"
 DB_PORT = 26257
 DB_NAME = "mi_bd"
@@ -12,7 +11,8 @@ def get_connection(default_db=False):
     return psycopg2.connect(
         host=DB_HOST,
         port=DB_PORT,
-        database=db,
+        dbname=db,          # psycopg2 usa dbname
         user=DB_USER,
         sslmode=DB_SSLMODE
     )
+
