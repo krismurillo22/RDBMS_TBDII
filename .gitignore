@@ -1,1 +1,13 @@
 Proyecto1-Database_Manager.pdf
+src/db/__pycache__/connection.cpython-314.pyc
+src/db/__pycache__/connection.cpython-314.pyc
+src/db/__pycache__/execute.cpython-314.pyc
+src/db/__pycache__/init_db.cpython-314.pyc
+src/db/__pycache__/init_db.cpython-314.pyc
+src/services/__pycache__/connection_service.cpython-314.pyc
+src/ui/dialogs/__pycache__/login_dialog.cpython-314.pyc
+src/ui/__pycache__/main_window.cpython-314.pyc
+src/db/__pycache__/init_db.cpython-314.pyc
+src/db/__pycache__/connection.cpython-314.pyc
+src/db/__pycache__/connection.cpython-314.pyc
+*.pyc
