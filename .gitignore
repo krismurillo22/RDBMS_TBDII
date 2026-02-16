@@ -11,3 +11,4 @@ src/db/__pycache__/init_db.cpython-314.pyc
 src/db/__pycache__/connection.cpython-314.pyc
 src/db/__pycache__/connection.cpython-314.pyc
 *.pyc
+src/db/__pycache__/connection.cpython-314.pyc
