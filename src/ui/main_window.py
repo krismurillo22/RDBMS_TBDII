@@ -4,13 +4,13 @@ from tkinter import ttk, messagebox
 from services.connection_service import ConnectionService, ConnectionInfo
 from services.browser_service import get_browser_data
 from ui.widgets.object_tree import ObjectTree
-from db.objects_repo import get_table_columns
+from db.objects_repo import get_table_columns, get_primary_key_columns, get_column_defaults, get_table_indexes, get_foreign_keys
 from db.ddl_repo import get_create_table_ddl
 from ui.widgets.table_details import TableDetails
 from ui.widgets.empty_view import EmptyView
 from ui.widgets.ddl_view import DDLView
 from ui.widgets.scroll_frame import ScrollFrame
-
+from ui.widgets.sql_runner_view import SqlRunnerView
 
 
 class MainWindow(tk.Tk):
@@ -27,7 +27,9 @@ class MainWindow(tk.Tk):
         self.lbl_status = ttk.Label(top, text="No conectado")
         self.lbl_status.pack(side="left")
 
+        ttk.Button(top, text="SQL", command=self.open_sql).pack(side="right", padx=(0, 8))
         ttk.Button(top, text="Conectar", command=self.open_login).pack(side="right")
+
 
         body = ttk.PanedWindow(self, orient="horizontal")
         body.pack(fill="both", expand=True)
@@ -56,6 +58,16 @@ class MainWindow(tk.Tk):
 
         self.view_ddl = DDLView(self.right_container, on_back=lambda: self.show_view("details"))
 
+        self.view_sql = SqlRunnerView(
+        self.right_container,
+            get_conn=self.conn_service.get_conn,
+            on_back=self.back_from_sql
+        )
+        self.view_sql.place(relx=0, rely=0, relwidth=1, relheight=1)
+
+        self._last_view = "empty"
+
+
         for v in (self.view_empty, self.details_scroll, self.view_ddl):
             v.place(relx=0, rely=0, relwidth=1, relheight=1)
 
@@ -68,12 +80,19 @@ class MainWindow(tk.Tk):
         )
 
     def show_view(self, name: str):
+        # Guardar vista anterior (menos cuando vas a SQL)
+        if name != "sql":
+            self._last_view = name
+
         if name == "empty":
             self.view_empty.lift()
         elif name == "details":
-            self.details_scroll.lift()
+            self.details_scroll.lift()  # o tu view_details si no usas scrollframe
         elif name == "ddl":
             self.view_ddl.lift()
+        elif name == "sql":
+            self.view_sql.lift()
+
 
 
     def set_status_disconnected(self):
@@ -114,13 +133,27 @@ class MainWindow(tk.Tk):
         self.view_details.current_table = obj.name
         self.view_details.set_header(obj.name, obj.schema)
 
+        # PK columns
+        pk_cols = set(get_primary_key_columns(conn, obj.schema, obj.name))
+        defaults = get_column_defaults(conn, obj.schema, obj.name)
+
+        # Columnas
         cols = get_table_columns(conn, obj.schema, obj.name)
+
         columns_rows = []
         for name, dtype, notnull in cols:
-            columns_rows.append((name, dtype, "NO" if notnull else "YES", "", "")) 
-        self.view_details.load_columns(columns_rows)
+            pk_flag = "PK" if name in pk_cols else ""
+            default_val = defaults.get(name, "")
+            columns_rows.append((name, dtype, "NO" if notnull else "YES", default_val, pk_flag))
 
-        # 2) Preview
+        self.view_details.load_columns(columns_rows) 
+        idx_rows = get_table_indexes(conn, obj.schema, obj.name)
+        self.view_details.load_indexes(idx_rows)
+        fk_rows = get_foreign_keys(conn, obj.schema, obj.name)
+        self.view_details.load_foreign_keys(fk_rows)
+
+
+        # Preview
         try:
             from db.execute import fetch_all
             preview_sql = f'SELECT * FROM "{obj.schema}"."{obj.name}" LIMIT 100;'
@@ -146,6 +179,13 @@ class MainWindow(tk.Tk):
 
     def handle_edit_table(self):
         pass
+
+    def open_sql(self):
+        self.show_view("sql")
+
+    def back_from_sql(self):
+        self.show_view(self._last_view)
+
 
 
 

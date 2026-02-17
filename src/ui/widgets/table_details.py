@@ -58,6 +58,14 @@ class TableDetails(ttk.Frame):
         )
         self.indexes_tree.pack(fill="x", pady=(6, 14))
 
+        self._section_label("Foreign Keys").pack(anchor="w")
+        self.fk_tree = self._make_tree(
+            columns=("name", "col", "ref"),
+            headings=("Nombre", "Columna", "Referencia"),
+            widths=(220, 180, 360),
+        )
+        self.fk_tree.pack(fill="x", pady=(6, 14))
+
         self._section_label("Vista previa de datos (primeras 100 filas)").pack(anchor="w")
         self.preview_tree = ttk.Treeview(self, show="headings")
         self.preview_tree.pack(fill="both", expand=True, pady=(6, 0))
@@ -121,3 +129,13 @@ class TableDetails(ttk.Frame):
 
         for r in rows:
             self.preview_tree.insert("", "end", values=r)
+
+    def load_foreign_keys(self, rows):
+        for i in self.fk_tree.get_children():
+            self.fk_tree.delete(i)
+
+        for r in rows:
+            fk_name, col, ref_schema, ref_table, ref_col = r
+            ref = f'{ref_schema}.{ref_table}({ref_col})'
+            self.fk_tree.insert("", "end", values=(fk_name, col, ref))
+
