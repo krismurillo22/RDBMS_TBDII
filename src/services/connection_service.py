@@ -5,6 +5,7 @@ from typing import Optional, Tuple
 from psycopg2 import Error as PsycopgError
 
 from db.connection import get_connection
+from db.objects_repo import list_databases
 
 
 @dataclass
@@ -72,3 +73,17 @@ class ConnectionService:
 
     def get_current_info(self) -> Optional[ConnectionInfo]:
         return self._current_info
+    
+    def get_databases(self, info: ConnectionInfo) -> list[str]:
+        conn = get_connection(
+            host=info.host,
+            port=info.port,
+            database="mi_bd",  
+            user=info.user,
+            password=info.password,
+            sslmode=info.sslmode
+        )
+        try:
+            return list_databases(conn)
+        finally:
+            conn.close()

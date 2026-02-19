@@ -27,7 +27,13 @@ class LoginDialog(tk.Toplevel):
 
         self._row(frm, "Host", self.var_host, 0)
         self._row(frm, "Port", self.var_port, 1)
-        self._row(frm, "Database", self.var_db, 2)
+        ttk.Label(frm, text="Database").grid(row=2, column=0, sticky="w", pady=4)
+
+        self.cmb_db = ttk.Combobox(frm, textvariable=self.var_db, values=[], width=27, state="readonly")
+        self.cmb_db.grid(row=2, column=1, sticky="w", pady=4)
+
+        ttk.Button(frm, text="Cargar", command=self.load_databases).grid(row=2, column=2, padx=(8, 0))
+
         self._row(frm, "User", self.var_user, 3)
         self._row(frm, "Password", self.var_pass, 4, show="*")
 
@@ -44,7 +50,7 @@ class LoginDialog(tk.Toplevel):
 
         self.bind("<Return>", lambda e: self.on_connect())
         self.bind("<Escape>", lambda e: self.destroy())
-
+        self.after(200, self.load_databases)
         self._center(parent)
 
     def _row(self, parent, label, var, r, show=None):
@@ -95,3 +101,30 @@ class LoginDialog(tk.Toplevel):
             self.destroy()
         except Exception as e:
             messagebox.showerror("Error", str(e))
+
+    def load_databases(self):
+        try:
+            info = ConnectionInfo(
+                name="temp",
+                host=self.var_host.get().strip(),
+                port=int(self.var_port.get().strip()),
+                database="defaultdb",
+                user=self.var_user.get().strip(),
+                password=self.var_pass.get().strip() or None,
+                sslmode=self.var_ssl.get().strip() or "disable",
+            )
+
+            dbs = self.conn_service.get_databases(info)
+
+            if not dbs:
+                messagebox.showwarning("Sin resultados", "No se encontraron bases de datos.")
+                return
+
+            self.cmb_db["values"] = dbs
+
+            if self.var_db.get() not in dbs:
+                self.var_db.set(dbs[0])
+
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+

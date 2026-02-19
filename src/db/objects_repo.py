@@ -78,3 +78,7 @@ def get_foreign_keys(conn, schema: str, table: str) -> list[tuple[str, str, str,
     """
     _, rows = fetch_all(conn, GET_FOREIGN_KEYS, (schema, table))
     return rows
+
+def list_databases(conn) -> list[str]:
+    cols, rows = fetch_all(conn, "SHOW DATABASES;")
+    return [r[0] for r in rows]

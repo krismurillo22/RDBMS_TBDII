@@ -11,6 +11,9 @@ from ui.widgets.empty_view import EmptyView
 from ui.widgets.ddl_view import DDLView
 from ui.widgets.scroll_frame import ScrollFrame
 from ui.widgets.sql_runner_view import SqlRunnerView
+from ui.widgets.create_table_view import CreateTableView
+from ui.widgets.create_view_view import CreateViewView
+
 
 
 class MainWindow(tk.Tk):
@@ -29,7 +32,8 @@ class MainWindow(tk.Tk):
 
         ttk.Button(top, text="SQL", command=self.open_sql).pack(side="right", padx=(0, 8))
         ttk.Button(top, text="Conectar", command=self.open_login).pack(side="right")
-
+        ttk.Button(top, text="Crear Tabla", command=self.open_create_table).pack(side="right", padx=(0, 8))
+        ttk.Button(top, text="Crear Vista", command=self.open_create_view).pack(side="right", padx=(0, 8))
 
         body = ttk.PanedWindow(self, orient="horizontal")
         body.pack(fill="both", expand=True)
@@ -64,6 +68,22 @@ class MainWindow(tk.Tk):
             on_back=self.back_from_sql
         )
         self.view_sql.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.view_create_table = CreateTableView(
+            self.right_container,
+            get_conn=self.conn_service.get_conn,
+            on_back=lambda: self.show_view(self._last_view),
+            on_created=self.refresh_objects,
+        )
+        self.view_create_table.place(relx=0, rely=0, relwidth=1, relheight=1)
+
+        self.view_create_view = CreateViewView(
+            self.right_container,
+            get_conn=self.conn_service.get_conn,
+            on_back=lambda: self.show_view(self._last_view),
+            on_created=self.refresh_objects,
+        )
+        self.view_create_view.place(relx=0, rely=0, relwidth=1, relheight=1)
+
 
         self._last_view = "empty"
 
@@ -80,19 +100,21 @@ class MainWindow(tk.Tk):
         )
 
     def show_view(self, name: str):
-        # Guardar vista anterior (menos cuando vas a SQL)
-        if name != "sql":
+        if name not in ("sql", "create_table", "create_view"):
             self._last_view = name
 
         if name == "empty":
             self.view_empty.lift()
         elif name == "details":
-            self.details_scroll.lift()  # o tu view_details si no usas scrollframe
+            self.details_scroll.lift()
         elif name == "ddl":
             self.view_ddl.lift()
         elif name == "sql":
             self.view_sql.lift()
-
+        elif name == "create_table":
+            self.view_create_table.lift()
+        elif name == "create_view":
+            self.view_create_view.lift()
 
 
     def set_status_disconnected(self):
@@ -152,7 +174,6 @@ class MainWindow(tk.Tk):
         fk_rows = get_foreign_keys(conn, obj.schema, obj.name)
         self.view_details.load_foreign_keys(fk_rows)
 
-
         # Preview
         try:
             from db.execute import fetch_all
@@ -185,6 +206,14 @@ class MainWindow(tk.Tk):
 
     def back_from_sql(self):
         self.show_view(self._last_view)
+
+    def open_create_table(self):
+        self.show_view("create_table")
+
+    def open_create_view(self):
+        self.show_view("create_view")
+
+        
 
 
 
