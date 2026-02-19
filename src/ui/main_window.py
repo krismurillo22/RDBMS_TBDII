@@ -14,8 +14,6 @@ from ui.widgets.sql_runner_view import SqlRunnerView
 from ui.widgets.create_table_view import CreateTableView
 from ui.widgets.create_view_view import CreateViewView
 
-
-
 class MainWindow(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -41,8 +39,10 @@ class MainWindow(tk.Tk):
         body.add(left, weight=1)
         ttk.Label(left, text="Objetos").pack(anchor="w")
 
-        self.obj_tree = ObjectTree(left, on_select=self.on_object_selected)
-        self.obj_tree.pack(fill="both", expand=True, pady=(6, 0))
+        self.obj_tree = ObjectTree(left, self.conn_service, on_select=self.on_object_selected)
+        self.obj_tree.pack(fill="both", expand=True)
+        self.obj_tree.populate_connections()
+        self.obj_tree.auto_expand_active()
 
         ttk.Button(left, text="Refrescar", command=self.refresh_objects).pack(fill="x", pady=(8, 0))
 
@@ -92,7 +92,6 @@ class MainWindow(tk.Tk):
             v.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         self.show_view("empty")
-        self.after(200, self.open_login)
 
     def set_status_connected(self, info: ConnectionInfo):
         self.lbl_status.configure(
@@ -139,8 +138,7 @@ class MainWindow(tk.Tk):
         conn = self.conn_service.get_conn()
         if conn is None:
             return
-        data = get_browser_data(conn)
-        self.obj_tree.populate(data)
+        self.obj_tree.populate_connections()
 
     def on_object_selected(self, obj):
         conn = self.conn_service.get_conn()

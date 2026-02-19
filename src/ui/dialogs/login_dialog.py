@@ -1,6 +1,7 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+import uuid
 
+from tkinter import ttk, messagebox
 from services.connection_service import ConnectionService, ConnectionInfo
 
 
@@ -68,6 +69,7 @@ class LoginDialog(tk.Toplevel):
 
     def _get_info(self) -> ConnectionInfo:
         return ConnectionInfo(
+            id="temp-" + uuid.uuid4().hex[:8],
             name="temp",
             host=self.var_host.get().strip(),
             port=int(self.var_port.get().strip()),
@@ -105,6 +107,7 @@ class LoginDialog(tk.Toplevel):
     def load_databases(self):
         try:
             info = ConnectionInfo(
+                id="temp-" + uuid.uuid4().hex[:8],
                 name="temp",
                 host=self.var_host.get().strip(),
                 port=int(self.var_port.get().strip()),

@@ -1,22 +1,4 @@
-# Consultas basadas en pg_catalog
 
-LIST_TABLES = """
-SELECT n.nspname AS schema_name, c.relname AS object_name
-FROM pg_catalog.pg_class c
-INNER JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-WHERE c.relkind = 'r'           -- r = ordinary table
-  AND n.nspname NOT IN ('pg_catalog', 'information_schema', 'crdb_internal')
-ORDER BY n.nspname, c.relname;
-"""
-
-LIST_VIEWS = """
-SELECT n.nspname AS schema_name, c.relname AS object_name
-FROM pg_catalog.pg_class c
-INNER JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-WHERE c.relkind = 'v'           -- v = view
-  AND n.nspname NOT IN ('pg_catalog', 'information_schema', 'crdb_internal')
-ORDER BY n.nspname, c.relname;
-"""
 GET_TABLE_COLUMNS = """
 SELECT 
     a.attname AS column_name,
@@ -116,4 +98,84 @@ WHERE con.contype = 'f'
   AND src_nsp.nspname = %s
   AND src_rel.relname = %s
 ORDER BY con.conname;
+"""
+LIST_DATABASES = "SHOW DATABASES;"
+
+LIST_SCHEMAS = """
+SELECT n.nspname AS schema_name
+FROM pg_catalog.pg_namespace n
+WHERE n.nspname NOT LIKE 'pg_%'
+  AND n.nspname <> 'information_schema'
+  AND n.nspname <> 'crdb_internal'
+ORDER BY n.nspname;
+"""
+
+LIST_TABLES_BY_SCHEMA = """
+SELECT n.nspname AS schema_name,
+       c.relname AS table_name
+FROM pg_catalog.pg_class c
+INNER JOIN pg_catalog.pg_namespace n
+  ON n.oid = c.relnamespace
+WHERE c.relkind = 'r'
+  AND n.nspname = %s
+ORDER BY c.relname;
+"""
+
+LIST_VIEWS_BY_SCHEMA = """
+SELECT n.nspname AS schema_name,
+       c.relname AS view_name
+FROM pg_catalog.pg_class c
+INNER JOIN pg_catalog.pg_namespace n
+  ON n.oid = c.relnamespace
+WHERE c.relkind = 'v'
+  AND n.nspname = %s
+ORDER BY c.relname;
+"""
+
+LIST_INDEXES_BY_SCHEMA = """
+SELECT
+  ns.nspname  AS schema_name,
+  t.relname   AS table_name,
+  i.relname   AS index_name
+FROM pg_catalog.pg_index ix
+INNER JOIN pg_catalog.pg_class t
+  ON t.oid = ix.indrelid
+INNER JOIN pg_catalog.pg_class i
+  ON i.oid = ix.indexrelid
+INNER JOIN pg_catalog.pg_namespace ns
+  ON ns.oid = t.relnamespace
+WHERE ns.nspname = %s
+ORDER BY t.relname, i.relname;
+"""
+
+LIST_FUNCTIONS_BY_SCHEMA = """
+SELECT
+  n.nspname AS schema_name,
+  p.proname AS routine_name
+FROM pg_catalog.pg_proc p
+INNER JOIN pg_catalog.pg_namespace n
+  ON n.oid = p.pronamespace
+WHERE n.nspname = %s
+ORDER BY p.proname;
+"""
+
+LIST_SEQUENCES_BY_SCHEMA = """
+SELECT n.nspname AS schema_name,
+       c.relname AS sequence_name
+FROM pg_catalog.pg_class c
+INNER JOIN pg_catalog.pg_namespace n
+  ON n.oid = c.relnamespace
+WHERE c.relkind = 'S'
+  AND n.nspname = %s
+ORDER BY c.relname;
+"""
+
+LIST_TYPES_BY_SCHEMA = """
+SELECT n.nspname AS schema_name,
+       t.typname AS type_name
+FROM pg_catalog.pg_type t
+INNER JOIN pg_catalog.pg_namespace n
+  ON n.oid = t.typnamespace
+WHERE n.nspname = %s
+ORDER BY t.typname;
 """

@@ -1,10 +1,14 @@
-[
-  {
-    "name": "cockroach",
-    "host": "localhost",
-    "port": 26257,
-    "database": "defaultdb",
-    "user": "root",
-    "sslmode": "disable"
-  }
-]
+{
+  "active": "local-crdb",
+  "connections": [
+    {
+      "id": "local-crdb",
+      "name": "Cockroach Local",
+      "host": "localhost",
+      "port": 26257,
+      "database": "defaultdb",
+      "user": "root",
+      "sslmode": "disable"
+    }
+  ]
+}
