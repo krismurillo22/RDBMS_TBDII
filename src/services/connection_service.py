@@ -103,3 +103,54 @@ class ConnectionService:
             return list_schemas(conn)
         finally:
             conn.close()
+
+    def switch_database(self, database: str):
+        info = self.get_current_info()
+        if info is None:
+            raise RuntimeError("No hay conexión actual para cambiar de base de datos.")
+
+        if info.database == database:
+            return
+
+        new_info = ConnectionInfo(
+            id=info.id,
+            name=info.name,
+            host=info.host,
+            port=info.port,
+            database=database,
+            user=info.user,
+            password=info.password,
+            sslmode=info.sslmode,
+        )
+        self.connect(new_info)
+
+    def get_schemas_for_db(self, database: str) -> list[str]:
+        info = self.get_current_info()
+        if info is None:
+            raise RuntimeError("No hay conexión actual.")
+        conn = self.open_temp_conn(info, database)
+        try:
+            return list_schemas(conn)
+        finally:
+            conn.close()
+
+    def get_active_info(self) -> Optional[ConnectionInfo]:
+        infos, active = self.load_all()
+        if not infos:
+            return None
+        if not active:
+            return infos[0]
+        for i in infos:
+            if i.id == active:
+                return i
+        return infos[0]
+
+    def get_databases_active(self) -> list[str]:
+        info = self.get_active_info()
+        if info is None:
+            return []
+        conn = self.open_temp_conn(info, info.database) 
+        try:
+            return list_databases(conn)
+        finally:
+            conn.close()

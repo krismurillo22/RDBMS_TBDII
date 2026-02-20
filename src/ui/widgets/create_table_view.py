@@ -23,6 +23,10 @@ class CreateTableView(ttk.Frame):
         self,
         parent,
         get_conn: Callable[[], Any],
+        get_databases: Callable[[], list[str]],
+        get_schemas_for_db: Callable[[str], list[str]],
+        get_current_info: Callable[[], Any],
+        switch_database: Callable[[str], None],
         on_back: Callable[[], None],
         on_created: Optional[Callable[[], None]] = None,
         default_schema: str = "public",
@@ -32,11 +36,28 @@ class CreateTableView(ttk.Frame):
         self.on_back = on_back
         self.on_created = on_created
         self.schema = default_schema
+        self.get_databases = get_databases
+        self.get_schemas_for_db = get_schemas_for_db
+        self.get_current_info = get_current_info
+        self.switch_database = switch_database
 
         self.var_table = tk.StringVar(value="nombre_tabla")
 
         top = ttk.Frame(self, padding=10)
         top.pack(fill="x")
+        info = self.get_current_info()
+        current_db = info.database if info else "defaultdb"
+
+        self.var_db = tk.StringVar(value=current_db)
+        self.var_schema = tk.StringVar(value=default_schema)
+
+        ttk.Label(top, text="DB:", style="Sub.TLabel").pack(side="left", padx=(20, 6))
+        self.cmb_db = ttk.Combobox(top, textvariable=self.var_db, width=18, state="readonly")
+        self.cmb_db.pack(side="left")
+
+        ttk.Label(top, text="Schema:", style="Sub.TLabel").pack(side="left", padx=(12, 6))
+        self.cmb_schema = ttk.Combobox(top, textvariable=self.var_schema, width=14, state="readonly")
+        self.cmb_schema.pack(side="left")
 
         ttk.Button(top, text="← Volver", command=self.on_back).pack(side="left", padx=(0, 10))
         ttk.Label(top, text="Crear Tabla", style="Title.TLabel").pack(side="left")
@@ -62,7 +83,6 @@ class CreateTableView(ttk.Frame):
         ttk.Label(hdr, text="Columnas", style="Section.TLabel").pack(side="left")
         ttk.Button(hdr, text="+ Agregar Columna", command=self.add_column).pack(side="right")
 
-        # Header row
         self.cols_container = ttk.Frame(card2)
         self.cols_container.pack(fill="x", pady=(8, 0))
 
@@ -118,6 +138,11 @@ class CreateTableView(ttk.Frame):
         self.add_column(initial=True)
 
         self.var_table.trace_add("write", lambda *_: self.refresh_preview())
+        self._load_databases()
+        self._load_schemas()
+
+        self.cmb_db.bind("<<ComboboxSelected>>", lambda e: self._on_db_changed())
+        self.cmb_schema.bind("<<ComboboxSelected>>", lambda e: self._on_schema_changed())
 
     def add_column(self, initial=False):
         if initial and self.rows:
@@ -263,8 +288,9 @@ class CreateTableView(ttk.Frame):
         all_lines = cols + constraints
         cols_sql = ",\n".join(all_lines)
 
-        return f'CREATE TABLE {self._quote(self.schema)}.{self._quote(table)} (\n{cols_sql}\n);'
-
+        schema = self.var_schema.get().strip() or "public"
+        return f'CREATE TABLE {self._quote(schema)}.{self._quote(table)} (\n{cols_sql}\n);'
+    
     def refresh_preview(self):
         sql = self.build_sql()
         self.txt_preview.configure(state="normal")
@@ -273,14 +299,21 @@ class CreateTableView(ttk.Frame):
         self.txt_preview.configure(state="disabled")
 
     def create_table(self):
-        conn = self.get_conn()
-        if conn is None:
-            messagebox.showwarning("Sin conexión", "Conéctate primero.")
-            return
-
         sql = self.build_sql()
         if sql.startswith("--"):
             messagebox.showerror("Error", sql.replace("-- ", ""))
+            return
+
+        target_db = self.var_db.get().strip()
+        try:
+            self.switch_database(target_db)  
+        except Exception as e:
+            messagebox.showerror("Error", "No se pudo cambiar a la base")
+            return
+
+        conn = self.get_conn()              
+        if conn is None:
+            messagebox.showwarning("Sin conexión", "Conéctate primero.")
             return
 
         try:
@@ -292,3 +325,31 @@ class CreateTableView(ttk.Frame):
             self.on_back()
         except Exception as e:
             messagebox.showerror("Error", str(e))
+
+    def _load_databases(self):
+        try:
+            dbs = self.get_databases() or []
+            self.cmb_db["values"] = dbs
+            if dbs and self.var_db.get() not in dbs:
+                self.var_db.set(dbs[0])
+        except Exception:
+            self.cmb_db["values"] = []
+
+    def _load_schemas(self):
+        try:
+            db = self.var_db.get().strip()
+            schemas = self.get_schemas_for_db(db) or []
+            self.cmb_schema["values"] = schemas
+            if schemas and self.var_schema.get() not in schemas:
+                self.var_schema.set("public" if "public" in schemas else schemas[0])
+        except Exception:
+            self.cmb_schema["values"] = ["public"]
+            if not self.var_schema.get():
+                self.var_schema.set("public")
+
+    def _on_db_changed(self):
+        self._load_schemas()
+        self.refresh_preview()
+
+    def _on_schema_changed(self):
+        self.refresh_preview()

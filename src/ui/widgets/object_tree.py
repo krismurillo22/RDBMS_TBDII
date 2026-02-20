@@ -173,8 +173,18 @@ class ObjectTree(ttk.Frame):
             tbl_id = self.tree.insert(folder_node, "end", text=tbl, open=False)
             self._node_meta[tbl_id] = {"kind": "idx_table", "info": info, "database": database, "schema": schema, "table": tbl}
             for idx in idxs:
-                self.tree.insert(tbl_id, "end", text=idx)
+                iid = self.tree.insert(tbl_id, "end", text=idx, open=False)
 
+                dbo = DbObject(obj_type="index", schema=schema, name=idx)
+                self._node_to_obj[iid] = dbo
+                self._node_meta[iid] = {
+                    "kind": "index",
+                    "info": info,
+                    "database": database,
+                    "schema": schema,
+                    "table": tbl,
+                    "index": idx,
+                }
     def _load_functions(self, folder_node: str, info, database: str, schema: str):
         conn = self._open_meta_conn(info, database)
         try:
@@ -183,7 +193,10 @@ class ObjectTree(ttk.Frame):
             conn.close()
 
         for sch, fname in rows:
-            self.tree.insert(folder_node, "end", text=fname)
+            fid = self.tree.insert(folder_node, "end", text=fname, open=False)
+            dbo = DbObject(obj_type="function", schema=schema, name=fname)
+            self._node_to_obj[fid] = dbo
+            self._node_meta[fid] = {"kind": "function", "info": info, "database": database, "schema": schema, "name": fname}
 
     def _load_sequences(self, folder_node: str, info, database: str, schema: str):
         conn = self._open_meta_conn(info, database)
@@ -193,7 +206,10 @@ class ObjectTree(ttk.Frame):
             conn.close()
 
         for sch, sname in rows:
-            self.tree.insert(folder_node, "end", text=sname)
+            sid = self.tree.insert(folder_node, "end", text=sname, open=False)
+            dbo = DbObject(obj_type="sequence", schema=schema, name=sname)
+            self._node_to_obj[sid] = dbo
+            self._node_meta[sid] = {"kind": "sequence", "info": info, "database": database, "schema": schema, "name": sname}
 
     def _load_types(self, folder_node: str, info, database: str, schema: str):
         conn = self._open_meta_conn(info, database)
@@ -203,7 +219,10 @@ class ObjectTree(ttk.Frame):
             conn.close()
 
         for sch, tname in rows:
-            self.tree.insert(folder_node, "end", text=tname)
+            tid = self.tree.insert(folder_node, "end", text=tname, open=False)
+            dbo = DbObject(obj_type="type", schema=schema, name=tname)
+            self._node_to_obj[tid] = dbo
+            self._node_meta[tid] = {"kind": "type", "info": info, "database": database, "schema": schema, "name": tname}
 
     def _handle_select(self, _evt):
         sel = self.tree.selection()
@@ -213,30 +232,23 @@ class ObjectTree(ttk.Frame):
         item_id = sel[0]
         obj = self._node_to_obj.get(item_id)
         meta = self._node_meta.get(item_id, {})
-        if not obj:
+
+        if obj is None:
             return
-        
+
         if obj.obj_type == "table":
             info = meta.get("info")
             database = meta.get("database")
-
             if info and database:
                 cur = self.conn_service.get_current_info()
-
                 if cur is None or cur.database != database:
+                    from services.connection_service import ConnectionInfo
                     self.conn_service.connect(ConnectionInfo(
-                        id=info.id,
-                        name=info.name,
-                        host=info.host,
-                        port=info.port,
-                        database=database,          
-                        user=info.user,
-                        password=info.password,
-                        sslmode=info.sslmode,
-                    ))
+                        id=info.id, name=info.name, host=info.host, port=info.port,
+                        database=database, user=info.user, password=info.password, sslmode=info.sslmode,))
 
         if self.on_select:
-            self.on_select(obj)
+            self.on_select(obj, meta)
 
     def auto_expand_active(self):
         infos, active = self.conn_service.load_all()

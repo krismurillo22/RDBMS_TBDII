@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from typing import Optional
 
 from services.connection_service import ConnectionService, ConnectionInfo
 from services.browser_service import get_browser_data
@@ -71,17 +72,23 @@ class MainWindow(tk.Tk):
         self.view_create_table = CreateTableView(
             self.right_container,
             get_conn=self.conn_service.get_conn,
+            get_databases=self.conn_service.get_databases_active,
+            get_schemas_for_db=self.conn_service.get_schemas_for_db,
+            get_current_info=self.conn_service.get_current_info,
+            switch_database=self.conn_service.switch_database,
             on_back=lambda: self.show_view(self._last_view),
-            on_created=self.refresh_objects,
-        )
+            on_created=self.refresh_objects,)
         self.view_create_table.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         self.view_create_view = CreateViewView(
             self.right_container,
             get_conn=self.conn_service.get_conn,
+            get_databases=self.conn_service.get_databases_active,
+            get_schemas_for_db=self.conn_service.get_schemas_for_db,
+            get_current_info=self.conn_service.get_current_info,
+            switch_database=self.conn_service.switch_database,
             on_back=lambda: self.show_view(self._last_view),
-            on_created=self.refresh_objects,
-        )
+            on_created=self.refresh_objects,)
         self.view_create_view.place(relx=0, rely=0, relwidth=1, relheight=1)
 
 
@@ -140,12 +147,17 @@ class MainWindow(tk.Tk):
             return
         self.obj_tree.populate_connections()
 
-    def on_object_selected(self, obj):
+    def on_object_selected(self, obj, meta=None):
         conn = self.conn_service.get_conn()
         if conn is None:
             return
 
         if obj.obj_type != "table":
+            from db.ddl_repo import get_object_ddl
+            ddl = get_object_ddl(conn, obj, meta or {})
+            title = f"{obj.obj_type.upper()} {obj.schema}.{obj.name}"
+            self.view_ddl.set_content(title, ddl)
+            self.show_view("ddl")
             return
 
         self.view_details.clear_all()
@@ -211,7 +223,16 @@ class MainWindow(tk.Tk):
     def open_create_view(self):
         self.show_view("create_view")
 
-        
+    def get_active_info(self) -> Optional[ConnectionInfo]:
+        infos, active = self.load_all()
+        if not infos:
+            return None
+        if not active:
+            return infos[0]
+        for i in infos:
+            if i.id == active:
+                return i
+        return infos[0]
 
 
 
