@@ -25,30 +25,18 @@ def list_views_by_schema(conn: PGConnection, schema: str) -> List[DbObject]:
     return [DbObject(obj_type="view", schema=r[0], name=r[1]) for r in rows]
 
 def list_indexes_by_schema(conn: PGConnection, schema: str) -> list[tuple[str, str, str]]:
-    """
-    Retorna: [(schema, table, index), ...]
-    """
     _, rows = fetch_all(conn, LIST_INDEXES_BY_SCHEMA, (schema,))
     return rows
 
 def list_functions_by_schema(conn: PGConnection, schema: str) -> list[tuple[str, str]]:
-    """
-    Retorna: [(schema, function_name), ...]
-    """
     _, rows = fetch_all(conn, LIST_FUNCTIONS_BY_SCHEMA, (schema,))
     return rows
 
 def list_sequences_by_schema(conn: PGConnection, schema: str) -> list[tuple[str, str]]:
-    """
-    Retorna: [(schema, sequence_name), ...]
-    """
     _, rows = fetch_all(conn, LIST_SEQUENCES_BY_SCHEMA, (schema,))
     return rows
 
 def list_types_by_schema(conn: PGConnection, schema: str) -> list[tuple[str, str]]:
-    """
-    Retorna: [(schema, type_name), ...]
-    """
     _, rows = fetch_all(conn, LIST_TYPES_BY_SCHEMA, (schema,))
     return rows
 

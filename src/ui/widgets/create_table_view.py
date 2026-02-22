@@ -4,9 +4,7 @@ from tkinter import ttk, messagebox
 from dataclasses import dataclass
 from typing import Callable, Any, Optional, List
 
-
 IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-
 
 @dataclass
 class ColSpec:
@@ -42,27 +40,44 @@ class CreateTableView(ttk.Frame):
         self.switch_database = switch_database
 
         self.var_table = tk.StringVar(value="nombre_tabla")
-
-        top = ttk.Frame(self, padding=10)
-        top.pack(fill="x")
         info = self.get_current_info()
         current_db = info.database if info else "defaultdb"
 
         self.var_db = tk.StringVar(value=current_db)
         self.var_schema = tk.StringVar(value=default_schema)
 
-        ttk.Label(top, text="DB:", style="Sub.TLabel").pack(side="left", padx=(20, 6))
-        self.cmb_db = ttk.Combobox(top, textvariable=self.var_db, width=18, state="readonly")
-        self.cmb_db.pack(side="left")
+        top = ttk.Frame(self, padding=(10, 10, 10, 6))
+        top.pack(fill="x")
 
-        ttk.Label(top, text="Schema:", style="Sub.TLabel").pack(side="left", padx=(12, 6))
-        self.cmb_schema = ttk.Combobox(top, textvariable=self.var_schema, width=14, state="readonly")
-        self.cmb_schema.pack(side="left")
+        top.columnconfigure(0, weight=0) 
+        top.columnconfigure(1, weight=1) 
+        top.columnconfigure(2, weight=0) 
 
-        ttk.Button(top, text="← Volver", command=self.on_back).pack(side="left", padx=(0, 10))
-        ttk.Label(top, text="Crear Tabla", style="Title.TLabel").pack(side="left")
+        ttk.Button(top, text="← Volver", command=self.on_back).grid(
+            row=0, column=0, rowspan=2, sticky="w", padx=(0, 12)
+        )
 
-        ttk.Label(top, text="Interfaz visual de creación", style="Sub.TLabel").pack(side="left", padx=(14, 0))
+        ttk.Label(top, text="Crear Tabla", style="Title.TLabel").grid(
+            row=0, column=1, sticky="w"
+        )
+        ttk.Label(top, text="Interfaz visual de creación", style="Sub.TLabel").grid(
+            row=1, column=1, sticky="w", pady=(2, 0)
+        )
+
+        right = ttk.Frame(top)
+        right.grid(row=0, column=2, rowspan=2, sticky="e")
+
+        ttk.Label(right, text="DB:", style="Sub.TLabel").grid(row=0, column=0, sticky="e", padx=(0, 6))
+        self.cmb_db = ttk.Combobox(
+            right, textvariable=self.var_db, width=20, state="readonly", justify="left"
+        )
+        self.cmb_db.grid(row=0, column=1, sticky="e")
+
+        ttk.Label(right, text="Schema:", style="Sub.TLabel").grid(row=0, column=2, sticky="e", padx=(12, 6))
+        self.cmb_schema = ttk.Combobox(
+            right, textvariable=self.var_schema, width=16, state="readonly", justify="left"
+        )
+        self.cmb_schema.grid(row=0, column=3, sticky="e")
 
         body = ttk.Frame(self, padding=12)
         body.pack(fill="both", expand=True)
@@ -114,9 +129,6 @@ class CreateTableView(ttk.Frame):
         def h(lbl, w):
             ttk.Label(hdr, text=lbl, style="Sub.TLabel").pack(side="left", padx=(0, 8))
             hdr.pack_propagate(False)
-
-        self.cols_container = ttk.Frame(card2)
-        self.cols_container.pack(fill="x")
 
         card3 = ttk.Frame(body, padding=12)
         card3.pack(fill="both", expand=True)

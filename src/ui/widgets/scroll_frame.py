@@ -1,11 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-
 class ScrollFrame(ttk.Frame):
-    """
-    Frame con scroll vertical (Canvas + Scrollbar) para meter contenido grande.
-    """
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -19,7 +15,7 @@ class ScrollFrame(ttk.Frame):
         self.window_id = self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
         self.inner.bind("<Configure>", self._on_configure)
         self.canvas.bind("<Configure>", self._on_canvas_resize)
-        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)       # Windows
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)    
         self.canvas.bind_all("<Shift-MouseWheel>", self._on_mousewheel)
 
     def _on_configure(self, _event=None):

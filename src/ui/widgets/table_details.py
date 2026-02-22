@@ -3,13 +3,6 @@ from tkinter import ttk
 
 
 class TableDetails(ttk.Frame):
-    """
-    Panel derecho tipo 'ficha' de tabla:
-    - Header con nombre + botones
-    - Sección Columnas (Treeview)
-    - Sección Índices (Treeview)
-    - Sección Preview (Treeview)
-    """
 
     def __init__(self, parent, on_view_ddl=None, on_drop=None, on_edit=None):
         super().__init__(parent)

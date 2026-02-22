@@ -3,7 +3,6 @@ from tkinter import ttk, messagebox
 from typing import Optional
 
 from services.connection_service import ConnectionService, ConnectionInfo
-from services.browser_service import get_browser_data
 from ui.widgets.object_tree import ObjectTree
 from db.objects_repo import get_table_columns, get_primary_key_columns, get_column_defaults, get_table_indexes, get_foreign_keys
 from db.ddl_repo import get_create_table_ddl
@@ -64,8 +63,11 @@ class MainWindow(tk.Tk):
         self.view_ddl = DDLView(self.right_container, on_back=lambda: self.show_view("details"))
 
         self.view_sql = SqlRunnerView(
-        self.right_container,
+            self.right_container,
             get_conn=self.conn_service.get_conn,
+            get_databases=self.conn_service.get_databases_active,
+            get_current_info=self.conn_service.get_current_info,
+            switch_database=self.conn_service.switch_database,
             on_back=self.back_from_sql
         )
         self.view_sql.place(relx=0, rely=0, relwidth=1, relheight=1)
